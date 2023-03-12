@@ -1,0 +1,35 @@
+---
+
+- name: Run Jugglers
+  hosts: localhost
+  connection: local
+  vars:
+    jugglers_number: "{{ jugglers_number }}"
+  tasks:
+    - name: Run one container
+      become: true
+      ansible.builtin.shell: |
+        sudo docker build -t container .
+        sudo docker run -d --name container -p 5000:5000 container
+      args:
+        chdir: "{{ playbook_dir }}/Container"
+#      loop: "{{ query('sequence', 'start=1 end={{ jugglers_number }}'}}"
+#
+#      - name: deploy first container
+#        ansible.builtin.shell: |
+#          ls
+#        args:
+#          chdir: "{{ playbook_dir }}"
+#        when: ansible_loop.first
+
+#      - name: deploy middle container
+#        when:
+#          - not ansible_loop.first
+#          - not ansible_loop.last
+#
+#      - name: deploy last container
+#        when:
+#          - ansible_loop.last
+
+
+
