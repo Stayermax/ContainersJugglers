@@ -7,7 +7,7 @@ WORKDIR /home/container
 
 COPY ./requirments.txt ./
 
-RUN pip3 install ./requirments.txt
+RUN pip3 install -r /home/container/requirments.txt
 
 #to COPY the remote file at working directory in container
 COPY main.py ./

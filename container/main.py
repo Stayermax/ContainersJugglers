@@ -5,25 +5,26 @@ import requests
 
 app = FastAPI()
 
-
-@app.get("/")
+@app.get("/status")
 async def main_page():
     with open('config.yaml') as f:
         data = yaml.load(f, Loader=SafeLoader)
-        current_id = data['current_container_details']['id']
-        next_url = f"{data['next_container_details']['url']}:{data['next_container_details']['port']}/id"
-        next_id = requests.get(next_url).json()
+        current_id = data['current_container_details']['current_id']
+        next_url = f"http://{data['next_container_details']['next_url']}:{data['next_container_details']['next_port']}/id"
+        print(next_url)
+        next_id = requests.get(url=next_url).json()
         container_info = f"Container {current_id} is running. Next container id: {next_id}"
         return container_info
 
-
 @app.get("/id")
 async def main_page():
-    with open('config.yaml') as f:
-        data = yaml.load(f, Loader=SafeLoader)
-        current_id = data['current_container_details']['id']
-        return current_id
-
+    try:
+        with open('config.yaml') as f:
+            data = yaml.load(f, Loader=SafeLoader)
+            current_id = data['current_container_details']['current_id']
+            return current_id
+    except Exception as e:
+        return e
 
 @app.post("/files/")
 async def create_file(file: bytes = File()):

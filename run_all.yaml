@@ -3,33 +3,109 @@
 - name: Run Jugglers
   hosts: localhost
   connection: local
+  become: true
   vars:
     jugglers_number: "{{ jugglers_number }}"
   tasks:
-    - name: Run one container
-      become: true
-      ansible.builtin.shell: |
-        sudo docker build -t container .
-        sudo docker run -d --name container -p 5000:5000 container
-      args:
-        chdir: "{{ playbook_dir }}/Container"
-#      loop: "{{ query('sequence', 'start=1 end={{ jugglers_number }}'}}"
-#
-#      - name: deploy first container
-#        ansible.builtin.shell: |
-#          ls
-#        args:
-#          chdir: "{{ playbook_dir }}"
-#        when: ansible_loop.first
+    - name: Delete the arena
+      file:
+        state: absent
+        path: "{{ playbook_dir }}/arena"
 
-#      - name: deploy middle container
-#        when:
-#          - not ansible_loop.first
-#          - not ansible_loop.last
-#
-#      - name: deploy last container
-#        when:
-#          - ansible_loop.last
+    - name: Re-create the arena
+      file:
+        state: directory
+        path: "{{ playbook_dir }}/arena"
+
+    - name: Delete all already existing containers
+      ansible.builtin.shell: |
+        docker ps -a | awk '{ print $1,$2 }' | grep container_{{ item }} | awk '{print $1 }' | xargs -I {} docker rm -f {}
+      with_sequence:
+        - "1-{{ jugglers_number }}"
+
+    - name: Copy container {{ jugglers_number }} time
+      copy:
+        src: "{{ playbook_dir }}/container/"
+        dest: "{{ playbook_dir }}/arena/container_{{ item }}"
+      with_sequence:
+        - "1-{{ jugglers_number }}"
+
+    # Current:
+    - name: update current container port
+      ansible.builtin.lineinfile:
+        path: "{{ playbook_dir }}/arena/container_{{ item }}/config.yaml"
+        search_string: "current_port:"
+        line: "    current_port: 500{{ item | string  }}"
+      with_sequence:
+        - "1-{{ jugglers_number }}"
+
+    - name: update current container id
+      ansible.builtin.lineinfile:
+        path: "{{ playbook_dir }}/arena/container_{{ item }}/config.yaml"
+        search_string: "current_id:"
+        line: "    current_id: {{ item }}"
+      with_sequence:
+        - "1-{{ jugglers_number }}"
+
+    # Next
+    - name: update next container port
+      ansible.builtin.lineinfile:
+        path: "{{ playbook_dir }}/arena/container_{{ item }}/config.yaml"
+        search_string: "next_port:"
+        line: "    next_port: 500{{ (item|int + 1) | string }}"
+      with_sequence:
+        - "1-{{ jugglers_number }}"
+
+    - name: update next container id
+      ansible.builtin.lineinfile:
+        path: "{{ playbook_dir }}/arena/container_{{ item }}/config.yaml"
+        search_string: "next_id:"
+        line: "    next_id: {{ (item|int + 1) | string}}"
+      with_sequence:
+        - "1-{{ jugglers_number }}"
+
+    # Last
+    - name: update last container port
+      ansible.builtin.lineinfile:
+        path: "{{ playbook_dir }}/arena/container_{{ jugglers_number }}/config.yaml"
+        search_string: "next_port:"
+        line: "    next_port: 5001"
+
+    - name: update next container id
+      ansible.builtin.lineinfile:
+        path: "{{ playbook_dir }}/arena/container_{{ jugglers_number }}/config.yaml"
+        search_string: "next_id:"
+        line: "    next_id: 1"
+
+    - name: Build containers
+      ansible.builtin.shell: |
+        docker build -t container_{{ item }} .
+      args:
+        chdir: "{{ playbook_dir }}/arena/container_{{ jugglers_number }}"
+      with_sequence:
+        - "1-{{ jugglers_number }}"
+
+    - name: Get info on juggle_network
+      docker_network_info:
+        name: juggle_network
+      register: network_exist
+
+    - name: Create network if it doesn't exist
+      ansible.builtin.shell: |
+        docker network create juggle_network
+      args:
+        chdir: "{{ playbook_dir }}/arena/container_{{ jugglers_number }}"
+      when: not network_exist
+
+
+    - name: Run containers
+      ansible.builtin.shell: |
+        docker run --name container_{{ item }} --net="bridge" -p 500{{ item }}:5000 -d container_{{ item }}
+      args:
+        chdir: "{{ playbook_dir }}/arena/container_{{ jugglers_number }}"
+      with_sequence:
+        - "1-{{ jugglers_number }}"
+
 
 
 
