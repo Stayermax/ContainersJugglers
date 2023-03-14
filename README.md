@@ -7,7 +7,7 @@ Creates **n** docker containers with ansible and sends file ball.yaml from one t
 
 ### To deploy the project run this command from project root:
 
-`ansible-playbook run_all.yaml -e "jugglers_number=5" -v`
+`ansible-playbook run_all.yaml -e "jugglers_number=n" -v`
 
 ### Console for running and controlling the process in swagger:
 
