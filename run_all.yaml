@@ -97,7 +97,7 @@
 
     - name: Run containers
       ansible.builtin.shell: |
-        docker run --name container_{{ item }} --net="juggle_network" -p 500{{ item }}:5000 -d container_{{ item }}
+        docker run --name container_{{ item }} --net="juggle_network" -p {{ (item|int) + 5000 }}:5000 -d container_{{ item }}
       args:
         chdir: "{{ playbook_dir }}/arena/container_{{ jugglers_number }}"
       with_sequence:
