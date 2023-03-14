@@ -1,16 +1,16 @@
 # ContainersJugglers
-Creates a few docker containers with ansible and sends file from one to another
+[img]()
 
-# Ansible 
-
-`ansible-playbook run_all.yaml -e "jugglers_number=1" -v`
+Creates a n docker containers with ansible and sends file from one to another
 
 
-# Docker
-`docker build -t container_1 .`
 
-`docker run --name container_1 -p 5000:5000 -d container`
+## To run the project:
 
-`uvicorn main:app --reload --port 5000 --host localhost`
+### Run this command from project root
 
-`docker rm -f container`
+`ansible-playbook run_all.yaml -e "jugglers_number=5" -v`
+
+### Console for running and controlling the process:
+
+http://localhost:5001/docs
