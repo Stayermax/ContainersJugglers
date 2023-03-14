@@ -19,9 +19,7 @@
 
     - name: Delete all already existing containers
       ansible.builtin.shell: |
-        docker ps -a | awk '{ print $1,$2 }' | grep container_{{ item }} | awk '{print $1 }' | xargs -I {} docker rm -f {}
-      with_sequence:
-        - "1-{{ jugglers_number }}"
+        docker ps -a | awk '{ print $1,$2 }' | grep container_ | awk '{print $1 }' | xargs -I {} docker rm -f {}
 
     - name: Copy container {{ jugglers_number }} time
       copy:

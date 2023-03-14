@@ -14,6 +14,7 @@ Creates **n** docker containers with ansible and sends file ball.yaml from one t
 http://localhost:5001/docs
 
 * Start process with `start_juggle` endpoint
-* Stop process wit `stop_juggle` endpoint
+* Stop process with `stop_juggle` endpoint
 * Use `do_i_have_a_ball` endpoint to check count of ball moves from one container to another
 * In the beginning **container_1** has the ball with counter = 0.
+* Juggling stops when you run `stop_juggle` endpoint and ball arrives to the container from which you ran this endpoint.
