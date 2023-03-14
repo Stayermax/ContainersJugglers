@@ -31,11 +31,19 @@
         - "1-{{ jugglers_number }}"
 
     # Current:
-    - name: update current container port
+    - name: update current container total_containers number
       ansible.builtin.lineinfile:
         path: "{{ playbook_dir }}/arena/container_{{ item }}/config.yaml"
-        search_string: "current_port:"
-        line: "    current_port: 500{{ item | string  }}"
+        search_string: "total_containers:"
+        line: "total_containers: {{ jugglers_number }}"
+      with_sequence:
+        - "1-{{ jugglers_number }}"
+
+    - name: update current container url
+      ansible.builtin.lineinfile:
+        path: "{{ playbook_dir }}/arena/container_{{ item }}/config.yaml"
+        search_string: "current_url:"
+        line: "    current_url: container_{{ item }}"
       with_sequence:
         - "1-{{ jugglers_number }}"
 
@@ -48,42 +56,26 @@
         - "1-{{ jugglers_number }}"
 
     # Next
-    - name: update next container port
+    - name: update next container url
       ansible.builtin.lineinfile:
         path: "{{ playbook_dir }}/arena/container_{{ item }}/config.yaml"
-        search_string: "next_port:"
-        line: "    next_port: 500{{ (item|int + 1) | string }}"
-      with_sequence:
-        - "1-{{ jugglers_number }}"
-
-    - name: update next container id
-      ansible.builtin.lineinfile:
-        path: "{{ playbook_dir }}/arena/container_{{ item }}/config.yaml"
-        search_string: "next_id:"
-        line: "    next_id: {{ (item|int + 1) | string}}"
+        search_string: "next_url:"
+        line: "    next_url: container_{{ (item|int + 1) | string  }}"
       with_sequence:
         - "1-{{ jugglers_number }}"
 
     # Last
-    - name: update last container port
+    - name: update last container url
       ansible.builtin.lineinfile:
         path: "{{ playbook_dir }}/arena/container_{{ jugglers_number }}/config.yaml"
-        search_string: "next_port:"
-        line: "    next_port: 5001"
+        search_string: "next_url:"
+        line: "    next_url: container_1"
 
-    - name: update next container id
-      ansible.builtin.lineinfile:
-        path: "{{ playbook_dir }}/arena/container_{{ jugglers_number }}/config.yaml"
-        search_string: "next_id:"
-        line: "    next_id: 1"
-
-    - name: Build containers
-      ansible.builtin.shell: |
-        docker build -t container_{{ item }} .
-      args:
-        chdir: "{{ playbook_dir }}/arena/container_{{ jugglers_number }}"
-      with_sequence:
-        - "1-{{ jugglers_number }}"
+    # Put ball in 1 container
+    - name: Put ball in 1 container
+      copy:
+        src: "{{ playbook_dir }}/ball.txt"
+        dest: "{{ playbook_dir }}/arena/container_1/volume/ball.txt"
 
     - name: Get info on juggle_network
       docker_network_info:
@@ -97,10 +89,17 @@
         chdir: "{{ playbook_dir }}/arena/container_{{ jugglers_number }}"
       when: not network_exist
 
+    - name: Build containers
+      ansible.builtin.shell: |
+        docker build -t container_{{ item }} .
+      args:
+        chdir: "{{ playbook_dir }}/arena/container_{{ item }}"
+      with_sequence:
+        - "1-{{ jugglers_number }}"
 
     - name: Run containers
       ansible.builtin.shell: |
-        docker run --name container_{{ item }} --net="bridge" -p 500{{ item }}:5000 -d container_{{ item }}
+        docker run --name container_{{ item }} --net="juggle_network" -p 500{{ item }}:5000 -d container_{{ item }}
       args:
         chdir: "{{ playbook_dir }}/arena/container_{{ jugglers_number }}"
       with_sequence:

@@ -10,6 +10,7 @@ COPY ./requirments.txt ./
 RUN pip3 install -r /home/container/requirments.txt
 
 #to COPY the remote file at working directory in container
+COPY volume ./volume
 COPY main.py ./
 COPY config.yaml ./
 # Now the structure looks like this '/usr/app/src/test.py'
